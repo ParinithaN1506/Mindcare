@@ -1,0 +1,8 @@
+{
+  "name": "MindCare",
+  "description": "A premium full-stack mental wellness platform for students featuring AI-powered journaling, mood tracking, and personalized wellness insights.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
