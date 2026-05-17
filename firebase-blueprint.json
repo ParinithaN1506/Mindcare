@@ -1,0 +1,116 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and settings",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["student", "counselor", "admin"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "wellnessScore": { "type": "number" },
+        "onboardingCompleted": { "type": "boolean" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "MoodEntry": {
+      "title": "Mood Entry",
+      "description": "Daily mood check-in",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "mood": { "type": "string" },
+        "intensity": { "type": "number" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "note": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "mood", "intensity", "timestamp"]
+    },
+    "JournalEntry": {
+      "title": "Journal Entry",
+      "description": "Student journal with AI analysis",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "content": { "type": "string" },
+        "summarizedContent": { "type": "string" },
+        "sentiment": { "type": "string" },
+        "keywords": { "type": "array", "items": { "type": "string" } },
+        "isPrivate": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "content", "createdAt"]
+    },
+    "AIInsight": {
+      "title": "AI Insight",
+      "description": "Generated insights based on mood and journaling",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "insightType": { "type": "string" },
+        "content": { "type": "string" },
+        "suggestion": { "type": "string" },
+        "riskLevel": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "content", "createdAt"]
+    },
+    "ProductivityLog": {
+      "title": "Productivity Log",
+      "description": "Focus sessions and Pomodoro data",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "sessionType": { "type": "string" },
+        "durationMinutes": { "type": "number" },
+        "taskName": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "sessionType", "durationMinutes", "timestamp"]
+    },
+    "Post": {
+      "title": "Community Post",
+      "description": "Anonymous community forum posts",
+      "type": "object",
+      "properties": {
+        "content": { "type": "string" },
+        "authorId": { "type": "string" },
+        "isAnonymous": { "type": "boolean" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "likes": { "type": "number" }
+      },
+      "required": ["content", "authorId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "users": {
+      "schema": "User",
+      "description": "Collection of user profiles"
+    },
+    "moodEntries": {
+      "schema": "MoodEntry",
+      "description": "User mood tracking data"
+    },
+    "journals": {
+      "schema": "JournalEntry",
+      "description": "User journal entries with AI insights"
+    },
+    "aiInsights": {
+      "schema": "AIInsight",
+      "description": "Generated AI insights and welfare reports"
+    },
+    "productivityLogs": {
+      "schema": "ProductivityLog",
+      "description": "Focus and study session logs"
+    },
+    "communityPosts": {
+      "schema": "Post",
+      "description": "Community forum posts"
+    }
+  }
+}
