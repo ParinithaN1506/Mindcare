@@ -1,0 +1,76 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitives
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    
+    // Auth tokens for roles (assuming custom claims are set, but for now we'll check the users collection)
+    function getUserData() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function isAdmin() { return isSignedIn() && getUserData().role == 'admin'; }
+    function isCounselor() { return isSignedIn() && getUserData().role == 'counselor'; }
+
+    // Helpers
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // 1. Users Collection
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId) && incoming().role in ['student', 'counselor', 'admin'];
+      allow update: if isOwner(userId) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'wellnessScore', 'onboardingCompleted'])
+      ) || isAdmin();
+    }
+
+    // 2. MoodEntries Collection
+    match /moodEntries/{entryId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    // 3. Journals Collection
+    match /journals/{journalId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isCounselor());
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && existing().userId == request.auth.uid;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    // 4. AIInsights Collection
+    match /aiInsights/{insightId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create, update, delete: if false; // System only (Cloud Functions or Server)
+    }
+
+    // 5. ProductivityLogs Collection
+    match /productivityLogs/{logId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    // 6. WellnessPlans Collection
+    match /wellnessPlans/{planId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create, update, delete: if false; // Server only handled via API
+    }
+
+    // 7. CommunityPosts Collection
+    match /communityPosts/{postId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && incoming().authorId == request.auth.uid;
+      allow update: if isSignedIn() && existing().authorId == request.auth.uid;
+      allow delete: if isSignedIn() && (existing().authorId == request.auth.uid || isAdmin());
+    }
+  }
+}
