@@ -1,0 +1,87 @@
+import React, { Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import Layout from './components/Layout';
+
+// Lazy load pages for performance
+const Landing = lazy(() => import('./pages/Landing'));
+const Auth = lazy(() => import('./pages/Auth'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Journal = lazy(() => import('./pages/Journal'));
+const MoodTracking = lazy(() => import('./pages/MoodTracking'));
+const Focus = lazy(() => import('./pages/Focus'));
+const Emergency = lazy(() => import('./pages/Emergency'));
+const Community = lazy(() => import('./pages/Community'));
+const Admin = lazy(() => import('./pages/Admin'));
+const Onboarding = lazy(() => import('./pages/Onboarding'));
+const Insights = lazy(() => import('./pages/Insights'));
+const WellnessPlan = lazy(() => import('./pages/WellnessPlan'));
+const Profile = lazy(() => import('./pages/Profile'));
+
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background transition-colors duration-300">
+      <div className="relative">
+        <div className="w-16 h-16 rounded-full border-t-2 border-b-2 border-indigo-500 animate-spin"></div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-8 h-8 bg-indigo-500/20 rounded-full blur-md animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading, profile } = useAuth();
+  
+  if (loading) return <LoadingScreen />;
+  
+  if (!user) return <Navigate to="/auth" />;
+  
+  if (profile && !profile.onboardingCompleted && window.location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" />;
+  }
+  
+  return <>{children}</>;
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <ThemeProvider>
+        <BrowserRouter>
+          <Suspense fallback={<LoadingScreen />}>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/auth" element={<Auth />} />
+              
+              <Route path="/onboarding" element={
+                <ProtectedRoute>
+                  <Onboarding />
+                </ProtectedRoute>
+              } />
+
+              <Route element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/journal" element={<Journal />} />
+                <Route path="/mood" element={<MoodTracking />} />
+                <Route path="/focus" element={<Focus />} />
+                <Route path="/insights" element={<Insights />} />
+                <Route path="/wellness" element={<WellnessPlan />} />
+                <Route path="/emergency" element={<Emergency />} />
+                <Route path="/community" element={<Community />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/profile" element={<Profile />} />
+              </Route>
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </ThemeProvider>
+    </AuthProvider>
+  );
+}
